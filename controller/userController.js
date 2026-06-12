@@ -8,7 +8,7 @@ exports.getUsers = async (req,res) => {
         const data = await User.find()
         return res.json({errors:false,data:data})
     } catch (error) {
-        return res.status(500).josn({errors:true,message:error.message})
+        return res.status(500).json({errors:true,message:error.message})
     }
 }
 
