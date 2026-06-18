@@ -65,7 +65,6 @@ exports.putJob = async (req, res) => {
       });
     }
     
-    // ✅ Check if job exists
     const existingJob = await Job.findById(jobId);
     if (!existingJob) {
       return res.status(404).json({ 
@@ -74,18 +73,18 @@ exports.putJob = async (req, res) => {
       });
     }
     
-    // ✅ Verify ownership
-    if (existingJob.userId.toString() !== userId.toString()) {
+    // ✅ FIX: If job has no userId, allow ANY authenticated user to claim it
+    if (existingJob.userId && existingJob.userId.toString() !== userId.toString()) {
       return res.status(403).json({ 
         errors: true, 
         message: "You are not authorized to update this job" 
       });
     }
-
-    // ✅ Update job with userId from token (prevent spoofing)
+    
+    // ✅ If job has no userId, assign the current user as owner
     const jobData = {
       ...req.body,
-      userId: userId
+      userId: userId // This will set the userId if it was null
     };
 
     const data = await Job.findByIdAndUpdate(jobId, jobData, {
@@ -110,7 +109,6 @@ exports.deleteJob = async (req, res) => {
       });
     }
     
-    // ✅ Check if job exists
     const existingJob = await Job.findById(jobId);
     if (!existingJob) {
       return res.status(404).json({ 
@@ -119,15 +117,14 @@ exports.deleteJob = async (req, res) => {
       });
     }
     
-    // ✅ Verify ownership
-    if (existingJob.userId.toString() !== userId.toString()) {
+    // ✅ FIX: If job has no userId, allow ANY authenticated user to delete it
+    if (existingJob.userId && existingJob.userId.toString() !== userId.toString()) {
       return res.status(403).json({ 
         errors: true, 
         message: "You are not authorized to delete this job" 
       });
     }
     
-    // ✅ Delete the job
     const data = await Job.findByIdAndDelete(jobId);
     return res.json({ errors: false, data: data });
   } catch (error) {
