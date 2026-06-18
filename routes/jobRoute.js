@@ -8,10 +8,10 @@ route.get("/",getJob)
 
 route.get("/:id",jobFindById)
 
-route.post("/",[auth,user],postJob)
+route.post("/",[auth],postJob)
 
-route.put("/:id",[auth,user],putJob)
+route.put("/:id",[auth],putJob)
 
-route.delete("/:id",[auth,user],deleteJob)
+route.delete("/:id",[auth],deleteJob)
 
 module.exports = route
