@@ -50,7 +50,7 @@ exports.login = async (req,res) => {
             const comparePassword = await bcrypt.compare(req.body.password , userExists.password)
         if(!comparePassword) return res.status(500).json({errors:true,message:"The Email And Password Is Invaild"})
         
-        const token = await jwt.sign({_id:userExists , role:userExists.role},process.env.SEC)
+        const token = await jwt.sign({_id:userExists._id.toString() , role:userExists.role},process.env.SEC)
         return res.json({errors:false,data:{token:token,user:userExists}})
     } catch (error) {
         return res.status(500).json({errors:true,message:error.message})
