@@ -5,7 +5,6 @@ exports.user = async (req, res, next) => {
     try {
         // ✅ Use the already verified user from auth middleware
         const user = req.user;
-        
         if (!user) {
             return res.status(401).json({
                 errors: true,
