@@ -13,7 +13,7 @@ exports.user = async (req, res, next) => {
             });
         }
         
-        // ✅ Check if user has 'user' role
+        // ✅ Check if user has 'user' or 'admin' role
         if (user.role !== 'user' && user.role !== 'admin') {
             return res.status(403).json({
                 errors: true,
