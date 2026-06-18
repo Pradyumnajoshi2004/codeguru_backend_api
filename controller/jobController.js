@@ -3,7 +3,7 @@ const Job = require("../model/jobModel");
 
 exports.getJob = async (req, res) => {
   try {
-    const data = await Job.find().populate("userId");
+    const data = await Job.find().populate("userId", "name email");
     
     return res.json({ errors: false, data: data });
   } catch (error) {
@@ -13,8 +13,19 @@ exports.getJob = async (req, res) => {
 
 exports.postJob = async (req, res) => {
   try {
-    const userID = req.user?._id;
+    // ✅ Get userId from authenticated user
+    const userId = req.user?._id;
+    
+    if (!userId) {
+      return res.status(401).json({ 
+        errors: true, 
+        message: "User not authenticated" 
+      });
+    }
+
     const { companyName, description, role, city, jobType } = req.body;
+    
+    // Check if job already exists
     const isJobExists = await Job.findOne({
       companyName,
       description,
@@ -22,14 +33,19 @@ exports.postJob = async (req, res) => {
       city,
       jobType,
     });
-    if (isJobExists)
+    
+    if (isJobExists) {
       return res
         .status(409)
-        .json({ errors: true, message: "The Job Already Exsits" });
+        .json({ errors: true, message: "The Job Already Exists" });
+    }
+    
+    // ✅ Create job with userId from token
     const jobData = {
       ...req.body,
-      userId : userID
-    }
+      userId: userId
+    };
+    
     const data = await Job.create(jobData);
     return res.json({ errors: false, data: data });
   } catch (error) {
@@ -39,15 +55,26 @@ exports.postJob = async (req, res) => {
 
 exports.putJob = async (req, res) => {
   try {
-    const jobId = req.params.id
-    const userId = req.user._id
-    const existingJob = await Job.findById(jobId)
+    const jobId = req.params.id;
+    const userId = req.user?._id;
+    
+    if (!userId) {
+      return res.status(401).json({ 
+        errors: true, 
+        message: "User not authenticated" 
+      });
+    }
+    
+    // ✅ Check if job exists
+    const existingJob = await Job.findById(jobId);
     if (!existingJob) {
       return res.status(404).json({ 
         errors: true, 
         message: "Job not found" 
       });
     }
+    
+    // ✅ Verify ownership
     if (existingJob.userId.toString() !== userId.toString()) {
       return res.status(403).json({ 
         errors: true, 
@@ -55,9 +82,16 @@ exports.putJob = async (req, res) => {
       });
     }
 
-    const data = await Job.findByIdAndUpdate(req.params.id, req.body, {
+    // ✅ Update job with userId from token (prevent spoofing)
+    const jobData = {
+      ...req.body,
+      userId: userId
+    };
+
+    const data = await Job.findByIdAndUpdate(jobId, jobData, {
       new: true,
-    });
+    }).populate("userId", "name email");
+    
     return res.json({ errors: false, data: data });
   } catch (error) {
     return res.status(500).json({ errors: true, message: error.message });
@@ -65,10 +99,18 @@ exports.putJob = async (req, res) => {
 };
 
 exports.deleteJob = async (req, res) => {
-   const jobId = req.params.id;
-    const userId = req.user._id;
+  try {
+    const jobId = req.params.id;
+    const userId = req.user?._id;
     
-    // ✅ Check if user owns this job
+    if (!userId) {
+      return res.status(401).json({ 
+        errors: true, 
+        message: "User not authenticated" 
+      });
+    }
+    
+    // ✅ Check if job exists
     const existingJob = await Job.findById(jobId);
     if (!existingJob) {
       return res.status(404).json({ 
@@ -84,19 +126,28 @@ exports.deleteJob = async (req, res) => {
         message: "You are not authorized to delete this job" 
       });
     }
-  try {
-    const data = await Job.findByIdAndDelete(id);
+    
+    // ✅ Delete the job
+    const data = await Job.findByIdAndDelete(jobId);
     return res.json({ errors: false, data: data });
   } catch (error) {
-    return res.status(500).json({ errors: false, message: error.message });
+    return res.status(500).json({ errors: true, message: error.message });
   }
 };
 
 exports.jobFindById = async (req, res) => {
   try {
-    const data = await Job.findById(req.params.id);
+    const data = await Job.findById(req.params.id).populate("userId", "name email");
+    
+    if (!data) {
+      return res.status(404).json({ 
+        errors: true, 
+        message: "Job not found" 
+      });
+    }
+    
     return res.json({ errors: false, data: data });
   } catch (error) {
-    return res.status(500).json({ errors: false, messag: error.message });
+    return res.status(500).json({ errors: true, message: error.message });
   }
 };
