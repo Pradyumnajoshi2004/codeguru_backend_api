@@ -5,7 +5,7 @@ const {admin} = require("../middleware/authAdmin")
 
 const route = require("express").Router()
 
-route.get("/",auth,getFeedback)
+route.get("/",getFeedback)
 
 route.post("/",[auth,user],postFeedback)
 
