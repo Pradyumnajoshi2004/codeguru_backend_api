@@ -13,7 +13,7 @@ exports.getJob = async (req, res) => {
 
 exports.postJob = async (req, res) => {
   try {
-    const userIdentity = req.user._id;
+    const userID = req.user._id;
     const { companyName, description, role, city, jobType } = req.body;
     const isJobExists = await Job.findOne({
       companyName,
@@ -28,7 +28,7 @@ exports.postJob = async (req, res) => {
         .json({ errors: true, message: "The Job Already Exsits" });
     const jobData = {
       ...req.body,
-      userId = userIdentity
+      userId = userID
     }
     const data = await Job.create(jobData);
     return res.json({ errors: false, data: data });
